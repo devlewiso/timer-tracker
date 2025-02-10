@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Tracker</title>
+    <style>
+        :root {
+            --primary-bg: #ffffff;
+            --primary-color: #333;
+            --accent-color: #1a75ff;
+            --button-bg-start: #4caf50;
+            --button-bg-stop: #f44336;
+            --button-bg-reset: #ff9800;
+            --button-hover-start: #43a047;
+            --button-hover-stop: #e53935;
+            --button-hover-reset: #fb8c00;
+            --shadow-color: rgba(0, 0, 0, 0.2);
+        }
+
+        .dark-theme {
+            --primary-bg: #333333;
+            --primary-color: #ffffff;
+            --accent-color: #4df0ff;
+            --button-bg-start: #66bb6a;
+            --button-bg-stop: #ef5350;
+            --button-bg-reset: #ffb74d;
+            --button-hover-start: #81c784;
+            --button-hover-stop: #e57373;
+            --button-hover-reset: #ffcc80;
+            --shadow-color: rgba(255, 255, 255, 0.2);
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: var(--primary-bg);
+            color: var(--primary-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .time-tracker {
+            background-color: var(--primary-bg);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px var(--shadow-color);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+
+        .time {
+            font-size: 3.5em;
+            font-weight: bold;
+            margin-bottom: 30px;
+            color: var(--accent-color);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .buttons button {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, box-shadow 0.3s;
+            flex: 1;
+            margin: 0 10px;
+            color: #ffffff;
+        }
+
+        .buttons button:first-child {
+            margin-left: 0;
+        }
+
+        .buttons button:last-child {
+            margin-right: 0;
+        }
+
+        .buttons button.start {
+            background-color: var(--button-bg-start);
+        }
+
+        .buttons button.start:hover {
+            background-color: var(--button-hover-start);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .buttons button.stop {
+            background-color: var(--button-bg-stop);
+        }
+
+        .buttons button.stop:hover {
+            background-color: var(--button-hover-stop);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .buttons button.reset {
+            background-color: var(--button-bg-reset);
+        }
+
+        .buttons button.reset:hover {
+            background-color: var(--button-hover-reset);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .buttons button:focus {
+            outline: 2px solid var(--accent-color);
+            outline-offset: 2px;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px;
+            background-color: var(--primary-bg);
+            border: 2px solid var(--accent-color);
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--primary-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Footer Styling */
+        .footer {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: var(--primary-color);
+            text-align: center;
+        }
+
+        .footer a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive design */
+        @media (max-width: 500px) {
+            .time {
+                font-size: 2.5em;
+            }
+
+            .buttons button {
+                padding: 12px 20px;
+                font-size: 1em;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .time {
+                font-size: 2em;
+            }
+
+            .buttons button {
+                padding: 10px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="time-tracker">
+    <div class="time" id="time-display">00:00:00</div>
+    <div class="buttons">
+        <button class="start" id="start-button">Start</button>
+        <button class="stop" id="stop-button">Stop</button>
+        <button class="reset" id="reset-button">Reset</button>
+    </div>
+</div>
+
+<div class="footer">
+    Powered by <a href="https://neuralcodelab.com" target="_blank">neuralcodelab.com</a>
+</div>
+
+<button class="theme-toggle" id="theme-toggle">Toggle Theme</button>
+
+<script>
+    let startTime, updatedTime, difference;
+    let tInterval; // Timer Interval
+    let running = false;
+    let pausedTime = 0;
+
+    const timeDisplay = document.getElementById('time-display');
+    const startButton = document.getElementById('start-button');
+    const stopButton = document.getElementById('stop-button');
+    const resetButton = document.getElementById('reset-button');
+    const themeToggle = document.getElementById('theme-toggle');
+
+    // Check for saved theme preference
+    let currentTheme = localStorage.getItem('theme') || 'light';
+    if (currentTheme === 'dark') {
+        document.body.classList.add('dark-theme');
+    }
+
+    themeToggle.addEventListener('click', toggleTheme);
+
+    startButton.addEventListener('click', startTimer);
+    stopButton.addEventListener('click', stopTimer);
+    resetButton.addEventListener('click', resetTimer);
+
+    function startTimer() {
+        if (!running) {
+            startTime = new Date().getTime() - pausedTime;
+            tInterval = setInterval(getShowTime, 1000);
+            running = true;
+            updateButtonStates();
+        }
+    }
+
+    function stopTimer() {
+        if (running) {
+            clearInterval(tInterval);
+            pausedTime = difference;
+            running = false;
+            updateButtonStates();
+        }
+    }
+
+    function resetTimer() {
+        clearInterval(tInterval);
+        running = false;
+        pausedTime = 0;
+        timeDisplay.innerHTML = '00:00:00';
+        updateButtonStates();
+    }
+
+    function getShowTime() {
+        difference = calculateTimeDifference();
+        timeDisplay.innerHTML = formatTime(difference);
+    }
+
+    function calculateTimeDifference() {
+        updatedTime = new Date().getTime();
+        return updatedTime - startTime;
+    }
+
+    function formatTime(ms) {
+        let hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        let minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+        let seconds = Math.floor((ms % (1000 * 60)) / 1000);
+
+        hours = (hours < 10) ? "0" + hours : hours;
+        minutes = (minutes < 10) ? "0" + minutes : minutes;
+        seconds = (seconds < 10) ? "0" + seconds : seconds;
+
+        return `${hours}:${minutes}:${seconds}`;
+    }
+
+    function updateButtonStates() {
+        startButton.disabled = running;
+        stopButton.disabled = !running;
+        resetButton.disabled = !running && timeDisplay.innerHTML === '00:00:00';
+    }
+
+    function toggleTheme() {
+        document.body.classList.toggle('dark-theme');
+        currentTheme = document.body.classList.contains('dark-theme') ? 'dark' : 'light';
+        localStorage.setItem('theme', currentTheme); // Save theme preference
+    }
+
+    updateButtonStates(); // Initial button state setup
+</script>
+
+</body>
+</html>
